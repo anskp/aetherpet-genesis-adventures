@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { useGame } from '../contexts/GameContext';
 import * as THREE from 'three';
@@ -149,28 +148,29 @@ const GameScene: React.FC<GameSceneProps> = ({ className }) => {
   // Create pet
   const createPet = (scene: THREE.Scene) => {
     // Basic pet shape - different for each type
-    let geometry;
+    let bodyGeometry;
     let color;
     
     switch (state.petType) {
+      case 'electric':
+        // Create main body
+        bodyGeometry = new THREE.SphereGeometry(1, 32, 32);
+        color = 0xffd700; // Bright yellow
+        break;
       case 'fire':
-        geometry = new THREE.TetrahedronGeometry(1, 1);
+        bodyGeometry = new THREE.TetrahedronGeometry(1, 1);
         color = 0xff5500;
         break;
       case 'water':
-        geometry = new THREE.SphereGeometry(1, 32, 32);
+        bodyGeometry = new THREE.SphereGeometry(1, 32, 32);
         color = 0x0088ff;
         break;
       case 'forest':
-        geometry = new THREE.OctahedronGeometry(1, 0);
+        bodyGeometry = new THREE.OctahedronGeometry(1, 0);
         color = 0x00cc44;
         break;
-      case 'electric':
-        geometry = new THREE.DodecahedronGeometry(1, 0);
-        color = 0xffcc00;
-        break;
       default:
-        geometry = new THREE.BoxGeometry(1, 1, 1);
+        bodyGeometry = new THREE.BoxGeometry(1, 1, 1);
         color = 0xffffff;
     }
     
@@ -207,66 +207,88 @@ const GameScene: React.FC<GameSceneProps> = ({ className }) => {
       emissive,
       roughness: 0.6,
     });
-    
-    const pet = new THREE.Mesh(geometry, material);
-    
+
+    const pet = new THREE.Mesh(bodyGeometry, material);
+
+    if (state.petType === 'electric') {
+      // Add ears (triangular prisms)
+      const earGeometry = new THREE.ConeGeometry(0.3, 0.8, 4);
+      const earMaterial = new THREE.MeshStandardMaterial({
+        color: 0xffd700,
+        emissive: emissive
+      });
+
+      // Left ear
+      const leftEar = new THREE.Mesh(earGeometry, earMaterial);
+      leftEar.position.set(-0.5, 1, 0);
+      leftEar.rotation.z = Math.PI / 6;
+      pet.add(leftEar);
+
+      // Right ear
+      const rightEar = new THREE.Mesh(earGeometry, earMaterial);
+      rightEar.position.set(0.5, 1, 0);
+      rightEar.rotation.z = -Math.PI / 6;
+      pet.add(rightEar);
+
+      // Black ear tips
+      const tipGeometry = new THREE.ConeGeometry(0.15, 0.3, 4);
+      const tipMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
+      
+      const leftTip = new THREE.Mesh(tipGeometry, tipMaterial);
+      leftTip.position.set(0, 0.4, 0);
+      leftEar.add(leftTip);
+      
+      const rightTip = new THREE.Mesh(tipGeometry, tipMaterial);
+      rightTip.position.set(0, 0.4, 0);
+      rightEar.add(rightTip);
+
+      // Add red cheeks
+      const cheekGeometry = new THREE.CircleGeometry(0.2, 32);
+      const cheekMaterial = new THREE.MeshStandardMaterial({
+        color: 0xff6b6b,
+        side: THREE.DoubleSide
+      });
+
+      const leftCheek = new THREE.Mesh(cheekGeometry, cheekMaterial);
+      leftCheek.position.set(-0.6, 0, 0.5);
+      leftCheek.rotation.y = Math.PI / 2;
+      pet.add(leftCheek);
+
+      const rightCheek = new THREE.Mesh(cheekGeometry, cheekMaterial);
+      rightCheek.position.set(0.6, 0, 0.5);
+      rightCheek.rotation.y = Math.PI / 2;
+      pet.add(rightCheek);
+    }
+
     // Add eyes
-    const eyeGeometry = new THREE.SphereGeometry(0.2, 16, 16);
-    const eyeMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const eyeGeometry = new THREE.SphereGeometry(0.15, 32, 32);
+    const eyeMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
     
     const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
-    leftEye.position.set(-0.3, 0.3, 0.6);
+    leftEye.position.set(-0.3, 0.3, 0.8);
     pet.add(leftEye);
     
     const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
-    rightEye.position.set(0.3, 0.3, 0.6);
+    rightEye.position.set(0.3, 0.3, 0.8);
     pet.add(rightEye);
-    
-    // Add pupils
-    const pupilGeometry = new THREE.SphereGeometry(0.1, 16, 16);
-    const pupilMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
-    
-    const leftPupil = new THREE.Mesh(pupilGeometry, pupilMaterial);
-    leftPupil.position.set(0, 0, 0.1);
-    leftEye.add(leftPupil);
-    
-    const rightPupil = new THREE.Mesh(pupilGeometry, pupilMaterial);
-    rightPupil.position.set(0, 0, 0.1);
-    rightEye.add(rightPupil);
-    
-    // Close eyes if sleeping
-    if (state.isSleeping) {
-      leftEye.scale.y = 0.1;
-      rightEye.scale.y = 0.1;
-      leftPupil.visible = false;
-      rightPupil.visible = false;
-    }
-    
-    // Simple mouth
-    let mouth;
+
+    // Add smile
     if (state.mood === 'happy') {
-      // Happy mouth
-      const curve = new THREE.EllipseCurve(0, -0.3, 0.3, 0.1, 0, Math.PI, false);
-      const points = curve.getPoints(10);
-      const mouthGeometry = new THREE.BufferGeometry().setFromPoints(points);
-      const mouthMaterial = new THREE.LineBasicMaterial({ color: 0x000000 });
-      mouth = new THREE.Line(mouthGeometry, mouthMaterial);
-    } else if (state.mood === 'hungry' || state.mood === 'tired') {
-      // Sad/hungry mouth
-      const curve = new THREE.EllipseCurve(0, -0.4, 0.3, 0.1, Math.PI, 0, false);
-      const points = curve.getPoints(10);
-      const mouthGeometry = new THREE.BufferGeometry().setFromPoints(points);
-      const mouthMaterial = new THREE.LineBasicMaterial({ color: 0x000000 });
-      mouth = new THREE.Line(mouthGeometry, mouthMaterial);
+      const smileGeometry = new THREE.TorusGeometry(0.3, 0.05, 16, 32, Math.PI);
+      const smileMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+      const smile = new THREE.Mesh(smileGeometry, smileMaterial);
+      smile.position.set(0, 0, 0.8);
+      smile.rotation.x = Math.PI / 2;
+      pet.add(smile);
     } else {
       // Neutral mouth
       const mouthGeometry = new THREE.BoxGeometry(0.3, 0.05, 0.05);
       const mouthMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
-      mouth = new THREE.Mesh(mouthGeometry, mouthMaterial);
+      const mouth = new THREE.Mesh(mouthGeometry, mouthMaterial);
       mouth.position.set(0, -0.3, 0.6);
+      pet.add(mouth);
     }
-    
-    pet.add(mouth);
+
     scene.add(pet);
     petRef.current = pet;
   };

@@ -1,13 +1,48 @@
-// Update this page (the content is just a fallback if you fail to update the page)
 
+import React from 'react';
+import { GameProvider, useGame } from '../contexts/GameContext';
+import GameScene from '../components/GameScene';
+import GameUI from '../components/GameUI';
+import GameStats from '../components/GameStats';
+import IntroSequence from '../components/IntroSequence';
+
+// The main game component
+const GameContent = () => {
+  const { state } = useGame();
+  
+  return (
+    <div className="relative w-full h-full min-h-screen overflow-hidden game-container">
+      {state.showIntro ? (
+        <IntroSequence />
+      ) : (
+        <>
+          <header className="absolute top-0 left-0 right-0 p-4 z-10">
+            <h1 className="text-center font-bold text-xl md:text-2xl">
+              {state.petName ? `${state.petName} the AetherPet` : 'AetherPet Genesis'}
+            </h1>
+          </header>
+          
+          <div className="absolute top-16 left-0 right-0 px-4 z-10">
+            <GameStats />
+          </div>
+          
+          <div className="w-full h-screen">
+            <GameScene />
+          </div>
+          
+          <GameUI />
+        </>
+      )}
+    </div>
+  );
+};
+
+// The page component with provider
 const Index = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
-      </div>
-    </div>
+    <GameProvider>
+      <GameContent />
+    </GameProvider>
   );
 };
 

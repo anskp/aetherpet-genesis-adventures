@@ -1,0 +1,10 @@
+
+{
+  "accessors": [{"bufferView":0,"componentType":5126,"count":68,"max":[1,0,1.0000001192092896,0,0.9978342056274414,0,1,0,0,-1,0,0,108.03009033203125,63.18302917480469,246.95489501953125,1],"min":[-0.9666514992713928,0,-0.9978342056274414,0,-1.0000001192092896,0,-0.9666514992713928,0,0,-1,0,0,-184.96116638183594,-45.21165084838867,-172.26004028320312,1],"type":"MAT4","byteOffset":0}],
+  "asset": {"generator":"Khronos Blender glTF 2.0 exporter","version":"2.0"},
+  "scene": 0,
+  "scenes": [{"name":"Scene","nodes":[0,3,2]}],
+  "nodes": [{"children":[1,4],"name":"Armature","scale":[0.02539999969303608,0.02539999969303608,0.02539999969303608]}],
+  "meshes": [{"name":"Articuno","primitives":[{"material":1}]}],
+  "materials": [{"alphaMode":"OPAQUE","name":"Material__35","pbrMetallicRoughness":{"baseColorFactor":[0.6400000190734865,0.6400000190734865,0.6400000190734865,1],"metallicFactor":0}}]
+}

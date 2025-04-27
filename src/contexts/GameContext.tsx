@@ -4,7 +4,7 @@ import { saveGameState, loadGameState } from '../utils/storage';
 
 // Types
 export type PetStage = 'egg' | 'baby' | 'child' | 'teen' | 'adult';
-export type PetMood = 'happy' | 'hungry' | 'tired' | 'dirty' | 'sick' | 'neutral';
+export type PetMood = 'happy' | 'hungry' | 'tired' | 'dirty' | 'sick' | 'neutral' | 'sad';
 export type PetType = 'none' | 'fire' | 'water' | 'forest' | 'electric';
 
 export interface GameState {

@@ -3,9 +3,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useGame } from '../contexts/GameContext';
 import * as THREE from 'three';
 
-// Add Three.js
-<lov-add-dependency>three@^0.160.0</lov-add-dependency>
-
 interface GameSceneProps {
   className?: string;
 }
@@ -254,7 +251,7 @@ const GameScene: React.FC<GameSceneProps> = ({ className }) => {
       const mouthGeometry = new THREE.BufferGeometry().setFromPoints(points);
       const mouthMaterial = new THREE.LineBasicMaterial({ color: 0x000000 });
       mouth = new THREE.Line(mouthGeometry, mouthMaterial);
-    } else if (state.mood === 'sad' || state.mood === 'hungry') {
+    } else if (state.mood === 'hungry' || state.mood === 'tired') {
       // Sad/hungry mouth
       const curve = new THREE.EllipseCurve(0, -0.4, 0.3, 0.1, Math.PI, 0, false);
       const points = curve.getPoints(10);

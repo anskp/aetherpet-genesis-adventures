@@ -7,9 +7,6 @@ import { motion } from 'framer-motion';
 import { PetType, useGame } from '../contexts/GameContext';
 import { toast } from 'sonner';
 
-// Add Framer Motion
-<lov-add-dependency>framer-motion@^11.0.5</lov-add-dependency>
-
 const IntroSequence: React.FC = () => {
   const [step, setStep] = useState<number>(0);
   const [petName, setPetName] = useState<string>('');

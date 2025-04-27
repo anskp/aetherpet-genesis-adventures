@@ -1,8 +1,6 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { useGame } from '../contexts/GameContext';
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 interface GameSceneProps {
   className?: string;
@@ -15,8 +13,7 @@ const GameScene: React.FC<GameSceneProps> = ({ className }) => {
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const frameIdRef = useRef<number>(0);
-  const petRef = useRef<THREE.Object3D | null>(null);
-  const modelRef = useRef<THREE.Group | null>(null);
+  const petRef = useRef<THREE.Mesh | null>(null);
   
   // Setup Three.js scene
   useEffect(() => {
@@ -89,14 +86,6 @@ const GameScene: React.FC<GameSceneProps> = ({ className }) => {
         petRef.current.rotation.y += 0.01;
       }
       
-      if (modelRef.current) {
-        // Make model gently float
-        modelRef.current.position.y = Math.sin(Date.now() * 0.001) * 0.1;
-        
-        // Rotate gently
-        modelRef.current.rotation.y += 0.01;
-      }
-      
       if (rendererRef.current && sceneRef.current && cameraRef.current) {
         rendererRef.current.render(sceneRef.current, cameraRef.current);
       }
@@ -113,48 +102,6 @@ const GameScene: React.FC<GameSceneProps> = ({ className }) => {
     };
   }, []);
   
-  // Load 3D model for electric type
-  useEffect(() => {
-    if (state.petType === 'electric' && state.petStage !== 'egg' && sceneRef.current) {
-      try {
-        // Remove existing model if any
-        if (modelRef.current && sceneRef.current) {
-          sceneRef.current.remove(modelRef.current);
-          modelRef.current = null;
-        }
-        
-        // Create a simple loader
-        const loader = new GLTFLoader();
-        
-        // Load the model with proper error handling
-        loader.load(
-          '/models/pokemon/articuno.gltf',
-          (gltf) => {
-            if (!sceneRef.current) return;
-            
-            const model = gltf.scene;
-            model.scale.set(0.5, 0.5, 0.5);
-            model.position.y = 0;
-            
-            // Add the model to the scene
-            sceneRef.current.add(model);
-            modelRef.current = model;
-            
-            console.log("GLTF model loaded successfully");
-          },
-          (progress) => {
-            console.log('Loading model...', (progress.loaded / progress.total) * 100, '%');
-          },
-          (error) => {
-            console.error('Error loading GLTF model:', error);
-          }
-        );
-      } catch (error) {
-        console.error('Failed to load 3D model:', error);
-      }
-    }
-  }, [state.petType, state.petStage]);
-  
   // Update pet when state changes
   useEffect(() => {
     if (!sceneRef.current) return;
@@ -167,9 +114,7 @@ const GameScene: React.FC<GameSceneProps> = ({ className }) => {
     // Create pet based on state
     if (state.petStage === 'egg') {
       createEgg(sceneRef.current);
-    } else if (state.petType !== 'electric') {
-      // Only create the geometric pet when not electric type
-      // For electric type we use the 3D model
+    } else {
       createPet(sceneRef.current);
     }
     
@@ -208,8 +153,10 @@ const GameScene: React.FC<GameSceneProps> = ({ className }) => {
     
     switch (state.petType) {
       case 'electric':
-        // This is handled by the 3D model loading, so we just return
-        return;
+        // Create main body
+        bodyGeometry = new THREE.SphereGeometry(1, 32, 32);
+        color = 0xffd700; // Bright yellow
+        break;
       case 'fire':
         bodyGeometry = new THREE.TetrahedronGeometry(1, 1);
         color = 0xff5500;
@@ -262,6 +209,56 @@ const GameScene: React.FC<GameSceneProps> = ({ className }) => {
     });
 
     const pet = new THREE.Mesh(bodyGeometry, material);
+
+    if (state.petType === 'electric') {
+      // Add ears (triangular prisms)
+      const earGeometry = new THREE.ConeGeometry(0.3, 0.8, 4);
+      const earMaterial = new THREE.MeshStandardMaterial({
+        color: 0xffd700,
+        emissive: emissive
+      });
+
+      // Left ear
+      const leftEar = new THREE.Mesh(earGeometry, earMaterial);
+      leftEar.position.set(-0.5, 1, 0);
+      leftEar.rotation.z = Math.PI / 6;
+      pet.add(leftEar);
+
+      // Right ear
+      const rightEar = new THREE.Mesh(earGeometry, earMaterial);
+      rightEar.position.set(0.5, 1, 0);
+      rightEar.rotation.z = -Math.PI / 6;
+      pet.add(rightEar);
+
+      // Black ear tips
+      const tipGeometry = new THREE.ConeGeometry(0.15, 0.3, 4);
+      const tipMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
+      
+      const leftTip = new THREE.Mesh(tipGeometry, tipMaterial);
+      leftTip.position.set(0, 0.4, 0);
+      leftEar.add(leftTip);
+      
+      const rightTip = new THREE.Mesh(tipGeometry, tipMaterial);
+      rightTip.position.set(0, 0.4, 0);
+      rightEar.add(rightTip);
+
+      // Add red cheeks
+      const cheekGeometry = new THREE.CircleGeometry(0.2, 32);
+      const cheekMaterial = new THREE.MeshStandardMaterial({
+        color: 0xff6b6b,
+        side: THREE.DoubleSide
+      });
+
+      const leftCheek = new THREE.Mesh(cheekGeometry, cheekMaterial);
+      leftCheek.position.set(-0.6, 0, 0.5);
+      leftCheek.rotation.y = Math.PI / 2;
+      pet.add(leftCheek);
+
+      const rightCheek = new THREE.Mesh(cheekGeometry, cheekMaterial);
+      rightCheek.position.set(0.6, 0, 0.5);
+      rightCheek.rotation.y = Math.PI / 2;
+      pet.add(rightCheek);
+    }
 
     // Add eyes
     const eyeGeometry = new THREE.SphereGeometry(0.15, 32, 32);
@@ -334,7 +331,7 @@ const GameScene: React.FC<GameSceneProps> = ({ className }) => {
     
     // Animate particles
     const animateParticles = () => {
-      const positions = particlesGeometry.attributes.position.array as Float32Array;
+      const positions = particlesGeometry.attributes.position.array;
       
       for (let i = 0; i < count; i++) {
         const i3 = i * 3;
